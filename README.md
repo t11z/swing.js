@@ -40,12 +40,16 @@ this automatically on its first run). The game then lives at
 
 ### Controls / Steuerung
 
-| Action | Input |
-|---|---|
-| Move claw / Greifarm bewegen | `←` `→` or mouse |
-| Drop ball / Kugel abwerfen | `Space`, `↓` or click |
-| Pause | `P` or `Esc` |
-| Mute / Stumm | `M` |
+| Action | Desktop | Touch |
+|---|---|---|
+| Aim claw / Greifarm zielen | `←` `→` or hover | tap a column (or drag) |
+| Drop ball / Kugel abwerfen | `Space`, `↓` or click | tap the aimed column again |
+| Pause | `P` or `Esc` | ⏸ button |
+| Mute / Stumm | `M` | 🔊 button |
+
+**Mobile:** plays best in landscape. The page is installable — "Add to Home
+Screen" on iOS gives you a fullscreen standalone app with its own icon. Name
+entry uses a native input, so the on-screen keyboard just works.
 
 ### URL parameters (for testing)
 

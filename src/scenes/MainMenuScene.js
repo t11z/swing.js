@@ -31,7 +31,6 @@ export class MainMenuScene extends Phaser.Scene {
     this.difficulty = saved.difficulty ?? 'normal';
     this.extras = saved.extras ?? true;
     this.playerName = loadName() || 'Player 1';
-    this.editingName = false;
 
     this.add.rectangle(W / 2, LAYOUT.H / 2, W, LAYOUT.H, 0x171310);
     this.add.image(W / 2, 480, 'i-panel_dark').setDisplaySize(720, 780).setTint(0x54422f);
@@ -52,29 +51,28 @@ export class MainMenuScene extends Phaser.Scene {
 
     this.buttons = [];
     this.makeButton(W / 2, 420, t('start'), () => this.startGame(), { primary: true });
-    this.diffButton = this.makeButton(W / 2, 500, '', () => this.cycleDifficulty());
-    this.extrasButton = this.makeButton(W / 2, 570, '', () => this.toggleExtras());
-    this.langButton = this.makeButton(W / 2, 640, '', () => this.toggleLang());
-    this.makeButton(W / 2, 710, t('highscores'), () => this.scene.start('Highscore'));
+    this.diffButton = this.makeButton(W / 2, 502, '', () => this.cycleDifficulty());
+    this.extrasButton = this.makeButton(W / 2, 574, '', () => this.toggleExtras());
+    this.langButton = this.makeButton(W / 2, 646, '', () => this.toggleLang());
+    this.makeButton(W / 2, 718, t('highscores'), () => this.scene.start('Highscore'));
 
-    // Player name (click to edit)
-    this.nameLabel = this.add.text(W / 2, 778, '', {
+    // Player name (tap to edit via a native input, so phone keyboards work)
+    this.nameLabel = this.add.text(W / 2, 786, '', {
       fontFamily: FONTS.UI, fontSize: '22px', color: '#f0ead8',
-      backgroundColor: '#241c10', padding: { x: 12, y: 6 },
+      backgroundColor: '#241c10', padding: { x: 14, y: 8 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    this.nameLabel.on('pointerdown', () => { this.editingName = true; this.renderTexts(); });
+    this.nameLabel.on('pointerdown', () => this.editName());
 
-    this.help = this.add.text(W / 2, 850, '', {
+    this.help = this.add.text(W / 2, 872, '', {
       fontFamily: FONTS.UI, fontSize: '17px', color: '#8d8272', align: 'center',
     }).setOrigin(0.5);
 
-    this.input.keyboard.on('keydown', (ev) => this.onKey(ev));
     this.renderTexts();
   }
 
   makeButton(x, y, label, onClick, { primary = false } = {}) {
     const img = this.add.image(x, y, primary ? 'ui-button-active' : 'ui-button')
-      .setDisplaySize(340, 56).setInteractive({ useHandCursor: true });
+      .setDisplaySize(380, 64).setInteractive({ useHandCursor: true });
     if (!primary) img.setTint(0xbfae98);
     const text = this.add.text(x, y - 4, label, {
       fontFamily: FONTS.UI, fontStyle: 'bold', fontSize: '24px',
@@ -94,8 +92,41 @@ export class MainMenuScene extends Phaser.Scene {
     this.diffButton.text.setText(`${t('difficulty')}: ${t(`difficulty.${this.difficulty}`)}`);
     this.extrasButton.text.setText(`${t('extras')}: ${this.extras ? t('on') : t('off')}`);
     this.langButton.text.setText(`${t('language')}: ${getLang().toUpperCase()}`);
-    this.nameLabel.setText(`${t('playerName')}: ${this.playerName}${this.editingName ? '_' : ''}`);
-    this.help.setText(`${t('helpSeesaw')}\n${t('helpWeight')}\n\n${t('controls')}`);
+    this.nameLabel.setText(`${t('playerName')}: ${this.playerName}`);
+    const controls = this.sys.game.device.input.touch ? t('touchControls') : t('controls');
+    this.help.setText(`${t('helpSeesaw')}\n${t('helpWeight')}\n\n${controls}`);
+  }
+
+  editName() {
+    if (this.nameEdit) return;
+    this.nameLabel.setVisible(false);
+    this.nameEdit = this.add.dom(LAYOUT.W / 2, 786, 'input', `
+      width: 320px; font-size: 24px; padding: 8px 14px; text-align: center;
+      background: #241c10; color: #ffe082; border: 2px solid #8d8478; border-radius: 10px;
+      font-family: "Trebuchet MS", Verdana, sans-serif; font-weight: bold; outline: none;
+      -webkit-user-select: text; user-select: text; touch-action: manipulation;
+    `);
+    const node = this.nameEdit.node;
+    node.value = this.playerName;
+    node.maxLength = 14;
+    node.setAttribute('autocomplete', 'off');
+    node.setAttribute('enterkeyhint', 'done');
+    const done = () => {
+      if (!this.nameEdit) return;
+      this.playerName = node.value.trim() || 'Player 1';
+      saveName(this.playerName);
+      this.nameEdit.destroy();
+      this.nameEdit = null;
+      this.nameLabel.setVisible(true);
+      this.renderTexts();
+    };
+    node.addEventListener('keydown', (ev) => {
+      ev.stopPropagation();
+      if (ev.key === 'Enter' || ev.key === 'Escape') done();
+    });
+    node.addEventListener('blur', done);
+    node.focus();
+    node.select();
   }
 
   cycleDifficulty() {
@@ -114,21 +145,6 @@ export class MainMenuScene extends Phaser.Scene {
   toggleLang() {
     setLang(getLang() === 'de' ? 'en' : 'de');
     this.scene.restart();
-  }
-
-  onKey(ev) {
-    if (!this.editingName) return;
-    if (ev.key === 'Enter' || ev.key === 'Escape') {
-      this.editingName = false;
-    } else if (ev.key === 'Backspace') {
-      this.playerName = this.playerName.slice(0, -1);
-    } else if (ev.key.length === 1 && this.playerName.length < 14) {
-      this.playerName += ev.key;
-    } else {
-      return;
-    }
-    saveName(this.playerName);
-    this.renderTexts();
   }
 
   startGame() {

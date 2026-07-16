@@ -2,16 +2,36 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <title>Swing</title>
+  <meta name="theme-color" content="#171310">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Swing">
+  <link rel="apple-touch-icon" href="assets/icon-180.png">
+  <link rel="manifest" href="site.webmanifest">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='7' fill='%232fd4c7'/></svg>">
   <style>
-    html, body { margin: 0; padding: 0; background: #101418; height: 100%; overflow: hidden; }
+    html, body {
+      margin: 0; padding: 0; background: #101418;
+      position: fixed; inset: 0; width: 100%; height: 100%; overflow: hidden;
+      touch-action: none; overscroll-behavior: none;
+      -webkit-user-select: none; user-select: none;
+      -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none;
+    }
     #game { width: 100%; height: 100%; }
+    #rotate-hint {
+      position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top)); transform: translateX(-50%);
+      background: rgba(20, 16, 12, .92); color: #d8cf7a; padding: 8px 18px; border-radius: 10px;
+      font: bold 14px "Trebuchet MS", Verdana, sans-serif; z-index: 10;
+      display: none; pointer-events: none; white-space: nowrap;
+    }
   </style>
 </head>
 <body>
   <div id="game"></div>
+  <div id="rotate-hint"></div>
   <script src="vendor/phaser.min.js"></script>
   <script type="module" src="src/main.js"></script>
 </body>

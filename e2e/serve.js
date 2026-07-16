@@ -14,6 +14,7 @@ const TYPES = {
   '.ogg': 'audio/ogg',
   '.md': 'text/plain; charset=utf-8',
   '.css': 'text/css',
+  '.webmanifest': 'application/manifest+json',
 };
 
 export function startServer(port = 0) {

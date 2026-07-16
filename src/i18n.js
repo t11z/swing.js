@@ -35,6 +35,9 @@ const DICTS = {
     helpSeesaw: 'Wirf Kugeln auf die Wippen: 3 gleiche Farben nebeneinander räumen ab.',
     helpWeight: 'Die Zahl ist das Gewicht — die schwerere Seite kippt und schleudert Kugeln!',
     rank: 'Platz',
+    ok: 'OK',
+    rotateHint: 'Tipp: Querformat spielt sich besser 🔄',
+    touchControls: 'Touch: Tippen zielt, erneutes Tippen wirft',
   },
   en: {
     title: 'SWING',
@@ -69,6 +72,9 @@ const DICTS = {
     helpSeesaw: 'Drop balls onto the seesaws: 3 same colors side by side clear.',
     helpWeight: 'The number is the weight — the heavier side tips and catapults balls!',
     rank: 'Rank',
+    ok: 'OK',
+    rotateHint: 'Tip: landscape plays better 🔄',
+    touchControls: 'Touch: tap to aim, tap again to drop',
   },
 };
 

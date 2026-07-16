@@ -35,6 +35,8 @@ export class GameScene extends Phaser.Scene {
 
     this.playfield = this.add.container(0, 0);
     this.buildLayout();
+    // Soft highlight of the aimed column (updated by moveClaw/doDrop)
+    this.aimMarker = this.add.rectangle(colX(3), 570, LAYOUT.COL_W - 14, 640, 0xffffff, 0.05).setDepth(1);
     this.seesaws = [0, 1, 2, 3].map((s) => new SeesawView(this, s, this.playfield));
     this.queueView = new QueueView(this);
     this.claw = new ClawView(this);
@@ -54,6 +56,7 @@ export class GameScene extends Phaser.Scene {
       isReady: () => !this.busy && !this.paused && this.core.phase !== 'gameover',
       snapshot: () => this.core.snapshot(),
       core: this.core,
+      clawCol: () => this.claw.col,
     };
   }
 
@@ -142,18 +145,51 @@ export class GameScene extends Phaser.Scene {
 
     // Timer bottom left (the controls hint lives in the menu and pause screen)
     this.timerText = mkLabel(36, H - 44, '00:00', 24, '#f0ead8');
+
+    // Touch-friendly pause and mute buttons (bottom right, outside the field)
+    this.makeIconButton(1146, H - 76, '⏸', () => this.togglePause());
+    this.muteIcon = this.makeIconButton(1226, H - 76, this.sound.mute ? '🔇' : '🔊', () => {
+      this.sound.mute = !this.sound.mute;
+      this.muteIcon.setText(this.sound.mute ? '🔇' : '🔊');
+    });
+  }
+
+  makeIconButton(x, y, icon, onTap) {
+    const hit = this.add.rectangle(x, y, 112, 112, 0x000000, 0)
+      .setDepth(46).setInteractive({ useHandCursor: true });
+    const label = this.add.text(x, y, icon, {
+      fontFamily: FONTS.UI, fontSize: '40px',
+    }).setOrigin(0.5).setDepth(45).setAlpha(0.85);
+    hit.on('pointerdown', () => {
+      this.sfx('click', 0.35);
+      onTap();
+    });
+    return label;
   }
 
   // --- input -----------------------------------------------------------------
 
   setupInput() {
     this.input.on('pointermove', (p) => {
-      const col = this.colAt(p.x);
+      const col = this.colAt(p.x, p.y);
       if (col !== null) this.moveClaw(col);
     });
+    // Mouse: hover aims, click drops. Touch: tap aims, tap on the aimed
+    // column drops; dragging aims without dropping.
     this.input.on('pointerdown', (p) => {
-      const col = this.colAt(p.x);
+      this.tapStartCol = this.claw.col;
+      if (p.wasTouch) return; // touch commits on pointerup
+      const col = this.colAt(p.x, p.y);
       if (col !== null) this.doDrop(col);
+    });
+    this.input.on('pointerup', (p) => {
+      if (!p.wasTouch) return;
+      const col = this.colAt(p.x, p.y);
+      if (col === null) return;
+      const dragged = Phaser.Math.Distance.Between(p.downX, p.downY, p.x, p.y) > 24;
+      if (dragged) return; // drag = aim only
+      if (col === this.tapStartCol) this.doDrop(col);
+      else this.moveClaw(col);
     });
     const kb = this.input.keyboard;
     kb.on('keydown-LEFT', () => this.moveClaw(Math.max(0, this.claw.col - 1)));
@@ -165,18 +201,26 @@ export class GameScene extends Phaser.Scene {
     kb.on('keydown-M', () => { this.sound.mute = !this.sound.mute; });
   }
 
-  colAt(x) {
+  // Only the playfield area (below the queue, above the readouts) aims/drops,
+  // so taps on HUD elements never throw a ball.
+  colAt(x, y) {
+    if (y < LAYOUT.CLAW_Y - 70 || y > LAYOUT.FLOOR_Y + 44) return null;
     const c = Math.floor((x - LAYOUT.PLAYFIELD_X) / LAYOUT.COL_W);
     return c >= 0 && c < NUM_COLS ? c : null;
   }
 
   moveClaw(col) {
     if (this.busy || this.paused) return;
-    if (col !== this.claw.col) this.claw.moveTo(col);
+    if (col !== this.claw.col) {
+      this.claw.moveTo(col);
+      this.aimMarker.x = colX(col);
+    }
   }
 
   async doDrop(col) {
     if (this.busy || this.paused || this.core.phase === 'gameover' || !this.core.current) return false;
+    if (this.time.now < (this.resumeGuardUntil ?? 0)) return false;
+    this.aimMarker.x = colX(col);
     this.busy = true;
     const events = this.core.drop(col, this.time.now);
     await this.eventPlayer.play(events);
@@ -193,7 +237,10 @@ export class GameScene extends Phaser.Scene {
     this.paused = !this.paused;
     if (this.paused) {
       this.pauseOverlay = this.add.container(0, 0).setDepth(80);
-      this.pauseOverlay.add(this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.6));
+      const veil = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.6)
+        .setInteractive(); // tap anywhere to resume
+      veil.on('pointerdown', () => this.togglePause());
+      this.pauseOverlay.add(veil);
       this.pauseOverlay.add(this.add.text(W / 2, H / 2 - 20, t('pause'), {
         fontFamily: FONTS.UI, fontStyle: 'bold', fontSize: '64px', color: '#f0ead8',
       }).setOrigin(0.5));
@@ -206,6 +253,8 @@ export class GameScene extends Phaser.Scene {
     } else {
       this.pauseOverlay?.destroy();
       this.pauseOverlay = null;
+      // The resuming tap must not immediately drop a ball.
+      this.resumeGuardUntil = this.time.now + 300;
     }
   }
 

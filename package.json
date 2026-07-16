@@ -6,7 +6,7 @@
   "scripts": {
     "serve": "npx http-server -p 8080 -c-1 .",
     "test": "node --test test/*.test.js",
-    "test:e2e": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node --test e2e/smoke.test.js"
+    "test:e2e": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node --test e2e/smoke.test.js e2e/mobile.test.js"
   },
   "devDependencies": {
     "playwright": "^1.56.1"

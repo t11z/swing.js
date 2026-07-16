@@ -1,0 +1,14 @@
+{
+  "name": "Swing",
+  "short_name": "Swing",
+  "description": "Remake of the 1997 seesaw puzzle classic",
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#171310",
+  "theme_color": "#171310",
+  "icons": [
+    { "src": "assets/icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
