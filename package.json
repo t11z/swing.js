@@ -5,7 +5,7 @@
   "description": "Browser remake of the 1997 puzzle game Swing (Software 2000), built with Phaser 3 and Kenney.nl assets",
   "scripts": {
     "serve": "npx http-server -p 8080 -c-1 .",
-    "test": "node --test test/",
+    "test": "node --test test/*.test.js",
     "test:e2e": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers node --test e2e/smoke.test.js"
   },
   "devDependencies": {
