@@ -16,6 +16,7 @@ export class GameOverScene extends Phaser.Scene {
   create() {
     const W = LAYOUT.W;
     this.name = this.result.playerName || loadName() || '';
+    this.pristine = true; // first typed character replaces the prefilled name
     this.add.rectangle(W / 2, LAYOUT.H / 2, W, LAYOUT.H, 0x171310);
     this.add.image(W / 2, 460, 'i-panel_dark').setDisplaySize(640, 460).setTint(0x54422f);
 
@@ -49,10 +50,15 @@ export class GameOverScene extends Phaser.Scene {
     if (ev.key === 'Enter') {
       this.confirm();
     } else if (ev.key === 'Backspace') {
+      this.pristine = false;
       this.name = this.name.slice(0, -1);
       this.renderName();
-    } else if (ev.key.length === 1 && this.name.length < 14) {
-      this.name += ev.key;
+    } else if (ev.key.length === 1) {
+      if (this.pristine) {
+        this.name = '';
+        this.pristine = false;
+      }
+      if (this.name.length < 14) this.name += ev.key;
       this.renderName();
     }
   }

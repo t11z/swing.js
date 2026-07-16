@@ -2,18 +2,29 @@
 // self-destruct, so callers can fire and forget.
 
 export function fireBurst(scene, x, y) {
-  const emitter = scene.add.particles(x, y, 'p-fire_01', {
-    speed: { min: 30, max: 110 },
-    scale: { start: 0.5, end: 0 },
-    alpha: { start: 0.9, end: 0 },
-    lifespan: 420,
+  const flames = scene.add.particles(x, y, 'p-flame_01', {
+    speed: { min: 20, max: 70 },
+    angle: { min: 230, max: 310 }, // mostly upward
+    scale: { start: 0.3, end: 0 },
+    alpha: { start: 0.85, end: 0 },
+    tint: [0xff8a3c, 0xffb347, 0xe84a2e],
+    lifespan: 450,
     blendMode: 'ADD',
-    quantity: 10,
+    quantity: 6,
     emitting: false,
-  });
-  emitter.setDepth(50);
-  emitter.explode(10);
-  scene.time.delayedCall(600, () => emitter.destroy());
+  }).setDepth(50);
+  const sparks = scene.add.particles(x, y, 'p-spark_04', {
+    speed: { min: 60, max: 150 },
+    scale: { start: 0.22, end: 0 },
+    tint: 0xffd54f,
+    lifespan: 380,
+    blendMode: 'ADD',
+    quantity: 6,
+    emitting: false,
+  }).setDepth(50);
+  flames.explode(6);
+  sparks.explode(6);
+  scene.time.delayedCall(650, () => { flames.destroy(); sparks.destroy(); });
 }
 
 export function explosion(scene, x, y) {
