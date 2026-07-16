@@ -30,6 +30,14 @@ node e2e/serve.js 8080
 Then open <http://localhost:8080>. (ES modules require http — opening `index.html`
 directly from `file://` will not work.)
 
+### GitHub Pages
+
+The repo ships a workflow (`.github/workflows/deploy-pages.yml`) that runs the unit
+tests and deploys the game on every push to `main`. One-time setup: repo
+**Settings → Pages → Source: "GitHub Actions"** (the workflow also tries to enable
+this automatically on its first run). The game then lives at
+`https://<user>.github.io/swing.js/`.
+
 ### Controls / Steuerung
 
 | Action | Input |
