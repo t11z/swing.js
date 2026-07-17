@@ -1,0 +1,40 @@
+name: ✨ Feature-Wunsch
+description: "Eine Idee für ein neues Feature oder eine Verbesserung. (English is fine too!)"
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Motivation
+      description: Welches Problem löst das Feature bzw. was würde es besser machen?
+      placeholder: "Beispiel: Ich würde gern gegen eine zweite Person spielen, wie im Original-Zweispielermodus …"
+    validations:
+      required: true
+  - type: textarea
+    id: vorschlag
+    attributes:
+      label: Vorschlag
+      description: Wie könnte es funktionieren? Skizzen/Mockups gern anhängen.
+    validations:
+      required: true
+  - type: textarea
+    id: alternativen
+    attributes:
+      label: Alternativen
+      description: Gibt es andere Wege, das zu erreichen?
+    validations:
+      required: false
+  - type: dropdown
+    id: bereich
+    attributes:
+      label: Bereich
+      options:
+        - Spielmodi (z. B. Zweispieler, Endlos)
+        - Grafik / Effekte
+        - Sound / Musik
+        - Bedienung / Barrierefreiheit
+        - Technik (PWA, Performance, Plattformen)
+        - Sonstiges
+    validations:
+      required: false

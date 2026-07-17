@@ -36,7 +36,6 @@ const DICTS = {
     helpWeight: 'Die Zahl ist das Gewicht — die schwerere Seite kippt und schleudert Kugeln!',
     rank: 'Platz',
     ok: 'OK',
-    rotateHint: 'Tipp: Querformat spielt sich besser 🔄',
     touchControls: 'Touch: Tippen zielt, erneutes Tippen wirft',
   },
   en: {
@@ -73,7 +72,6 @@ const DICTS = {
     helpWeight: 'The number is the weight — the heavier side tips and catapults balls!',
     rank: 'Rank',
     ok: 'OK',
-    rotateHint: 'Tip: landscape plays better 🔄',
     touchControls: 'Touch: tap to aim, tap again to drop',
   },
 };

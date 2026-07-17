@@ -1,0 +1,56 @@
+name: 🎲 Gameplay & Balancing
+description: "Spielregeln, Originaltreue, Schwierigkeit, Scoring oder Extras — alles, was das Spielgefühl betrifft. (English is fine too!)"
+title: "[Gameplay] "
+labels: ["gameplay"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke, dass du beim Feintuning hilfst! Swing lebt von seiner Wippen-Mechanik —
+        je genauer du beschreibst, was sich falsch oder unrund anfühlt, desto besser.
+  - type: dropdown
+    id: bereich
+    attributes:
+      label: Bereich
+      description: Worum geht es hauptsächlich?
+      options:
+        - Regeln / Abweichung vom Original (1997)
+        - Balancing / Schwierigkeit
+        - Wippen- & Katapult-Verhalten
+        - Extras (Joker, Bombe, Herz, Sterne)
+        - Punkte / Bonus-Multiplikator
+        - Level-Progression / Farbanzahl
+        - Steuerung / Eingabe
+        - Sonstiges
+    validations:
+      required: true
+  - type: textarea
+    id: beschreibung
+    attributes:
+      label: Beschreibung
+      description: Was ist dir aufgefallen? Was fühlt sich falsch, zu leicht, zu schwer oder unlogisch an?
+      placeholder: "Beispiel: Wenn eine Wippe von ganz links nach ganz rechts kippt, fliegt die Kugel gefühlt zu weit …"
+    validations:
+      required: true
+  - type: textarea
+    id: original
+    attributes:
+      label: Verhalten im Original (falls bekannt)
+      description: Für Originaltreue-Themen — wie hat es Swing (1997) gemacht? Quellen (Handbuch, Video, eigene Erinnerung) gern verlinken.
+    validations:
+      required: false
+  - type: textarea
+    id: vorschlag
+    attributes:
+      label: Vorschlag
+      description: Wie sollte es sich stattdessen verhalten? Konkrete Zahlen/Formeln sind Gold wert.
+    validations:
+      required: false
+  - type: input
+    id: repro
+    attributes:
+      label: Reproduktion (Seed / Level / Schwierigkeit)
+      description: "Mit `?seed=<Zahl>` in der URL ist jedes Spiel exakt reproduzierbar — z. B. `?seed=42&difficulty=normal`, dazu Level und Situation."
+      placeholder: "seed=42, normal, Level 3, nach ~20 Würfen"
+    validations:
+      required: false

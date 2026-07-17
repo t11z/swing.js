@@ -47,9 +47,12 @@ this automatically on its first run). The game then lives at
 | Pause | `P` or `Esc` | ⏸ button |
 | Mute / Stumm | `M` | 🔊 button |
 
-**Mobile:** plays best in landscape. The page is installable — "Add to Home
-Screen" on iOS gives you a fullscreen standalone app with its own icon. Name
-entry uses a native input, so the on-screen keyboard just works.
+**Mobile:** the game picks a dedicated layout per orientation — a tall
+9:16 layout in portrait (bigger balls, one-handed play) and the classic 4:3
+cabinet in landscape. Rotating mid-game keeps your exact game state. The page
+is installable — "Add to Home Screen" on iOS gives you a fullscreen standalone
+app with its own icon. Name entry uses a native input, so the on-screen
+keyboard just works.
 
 ### URL parameters (for testing)
 

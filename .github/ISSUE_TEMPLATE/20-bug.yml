@@ -1,0 +1,69 @@
+name: 🐛 Bug melden
+description: "Etwas ist kaputt: Fehler, Grafik-Glitch, Absturz, Ton- oder Eingabeproblem. (English is fine too!)"
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: was
+    attributes:
+      label: Was passiert?
+      description: Beschreibe den Fehler — gern mit Screenshot oder kurzem Video.
+    validations:
+      required: true
+  - type: textarea
+    id: schritte
+    attributes:
+      label: Schritte zur Reproduktion
+      placeholder: |
+        1. Spiel mit `?seed=42` starten
+        2. Drei Kugeln auf Säule 4 werfen
+        3. …
+    validations:
+      required: true
+  - type: textarea
+    id: erwartet
+    attributes:
+      label: Erwartetes Verhalten
+    validations:
+      required: false
+  - type: input
+    id: seed
+    attributes:
+      label: Seed & Schwierigkeit
+      description: "Steht in der URL, wenn du mit `?seed=…` gestartet hast — macht den Fehler exakt nachspielbar."
+      placeholder: "seed=42, normal"
+    validations:
+      required: false
+  - type: dropdown
+    id: plattform
+    attributes:
+      label: Plattform
+      options:
+        - iPhone / iPad (Safari)
+        - iPhone / iPad (vom Home-Bildschirm / PWA)
+        - Android (Chrome)
+        - Desktop — Chrome/Edge
+        - Desktop — Firefox
+        - Desktop — Safari
+        - Sonstiges (bitte unten angeben)
+    validations:
+      required: true
+  - type: dropdown
+    id: orientierung
+    attributes:
+      label: Ausrichtung (Mobile)
+      options:
+        - Hochformat
+        - Querformat
+        - Beim Drehen / Orientierungswechsel
+        - Nicht relevant (Desktop)
+    validations:
+      required: false
+  - type: textarea
+    id: konsole
+    attributes:
+      label: Konsolen-Fehler (falls vorhanden)
+      description: "Desktop: F12 → Console. Fehlermeldungen hier einfügen."
+      render: text
+    validations:
+      required: false

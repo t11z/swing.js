@@ -4,7 +4,7 @@
   "description": "Remake of the 1997 seesaw puzzle classic",
   "start_url": ".",
   "display": "standalone",
-  "orientation": "landscape",
+  "orientation": "any",
   "background_color": "#171310",
   "theme_color": "#171310",
   "icons": [
