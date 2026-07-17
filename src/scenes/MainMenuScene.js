@@ -28,6 +28,10 @@ export class MainMenuScene extends Phaser.Scene {
 
   create() {
     const W = LAYOUT.W;
+    // The menu is designed on a 960-high canvas; center it vertically on
+    // taller (portrait) layouts.
+    const dy = (LAYOUT.H - 960) / 2;
+    this.menuDy = dy;
     const saved = loadSettings();
     this.difficulty = saved.difficulty ?? 'normal';
     this.extras = saved.extras ?? true;
@@ -43,10 +47,10 @@ export class MainMenuScene extends Phaser.Scene {
       this.spawnFallingBall(ball, true);
     }
 
-    this.add.image(W / 2, 480, 'i-panel_dark').setDisplaySize(720, 780).setTint(0x54422f);
-    this.add.image(W / 2, 130, 'i-hazard_long').setDisplaySize(660, 14);
+    this.add.image(W / 2, 480 + dy, 'i-panel_dark').setDisplaySize(Math.min(W - 16, 720), 780).setTint(0x54422f);
+    this.add.image(W / 2, 130 + dy, 'i-hazard_long').setDisplaySize(Math.min(W - 40, 660), 14);
 
-    const title = this.add.text(W / 2, 190, t('title'), {
+    const title = this.add.text(W / 2, 190 + dy, t('title'), {
       fontFamily: FONTS.UI, fontStyle: 'bold', fontSize: '110px',
       color: '#d8cf7a', stroke: '#241c10', strokeThickness: 10,
     }).setOrigin(0.5);
@@ -58,17 +62,17 @@ export class MainMenuScene extends Phaser.Scene {
       });
       this.cameras.main.postFX.addVignette(0.5, 0.5, 0.88, 0.34);
     }
-    this.add.text(W / 2, 268, t('subtitle'), {
+    this.add.text(W / 2, 268 + dy, t('subtitle'), {
       fontFamily: FONTS.UI, fontSize: '22px', color: '#c9bfa4',
     }).setOrigin(0.5);
 
     // Decorative marbles under the title, gently bobbing out of phase
     COLOR_TINTS.forEach((tint, i) => {
-      const marble = this.add.image(W / 2 + (i - 3) * 64, 330, `ball3d-c${i}`)
+      const marble = this.add.image(W / 2 + (i - 3) * 64, 330 + dy, `ball3d-c${i}`)
         .setDisplaySize(44, 44);
       this.tweens.add({
         targets: marble,
-        y: 324,
+        y: 324 + dy,
         duration: 1200,
         delay: i * 140,
         yoyo: true,
@@ -78,20 +82,20 @@ export class MainMenuScene extends Phaser.Scene {
     });
 
     this.buttons = [];
-    this.makeButton(W / 2, 420, t('start'), () => this.startGame(), { primary: true });
-    this.diffButton = this.makeButton(W / 2, 502, '', () => this.cycleDifficulty());
-    this.extrasButton = this.makeButton(W / 2, 574, '', () => this.toggleExtras());
-    this.langButton = this.makeButton(W / 2, 646, '', () => this.toggleLang());
-    this.makeButton(W / 2, 718, t('highscores'), () => this.scene.start('Highscore'));
+    this.makeButton(W / 2, 420 + dy, t('start'), () => this.startGame(), { primary: true });
+    this.diffButton = this.makeButton(W / 2, 502 + dy, '', () => this.cycleDifficulty());
+    this.extrasButton = this.makeButton(W / 2, 574 + dy, '', () => this.toggleExtras());
+    this.langButton = this.makeButton(W / 2, 646 + dy, '', () => this.toggleLang());
+    this.makeButton(W / 2, 718 + dy, t('highscores'), () => this.scene.start('Highscore'));
 
     // Player name (tap to edit via a native input, so phone keyboards work)
-    this.nameLabel = this.add.text(W / 2, 786, '', {
+    this.nameLabel = this.add.text(W / 2, 786 + dy, '', {
       fontFamily: FONTS.UI, fontSize: '22px', color: '#f0ead8',
       backgroundColor: '#241c10', padding: { x: 14, y: 8 },
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
     this.nameLabel.on('pointerdown', () => this.editName());
 
-    this.help = this.add.text(W / 2, 872, '', {
+    this.help = this.add.text(W / 2, 872 + dy, '', {
       fontFamily: FONTS.UI, fontSize: '17px', color: '#8d8272', align: 'center',
     }).setOrigin(0.5);
 
@@ -151,7 +155,7 @@ export class MainMenuScene extends Phaser.Scene {
   editName() {
     if (this.nameEdit) return;
     this.nameLabel.setVisible(false);
-    this.nameEdit = this.add.dom(LAYOUT.W / 2, 786, 'input', `
+    this.nameEdit = this.add.dom(LAYOUT.W / 2, 786 + this.menuDy, 'input', `
       width: 320px; font-size: 24px; padding: 8px 14px; text-align: center;
       background: #241c10; color: #ffe082; border: 2px solid #8d8478; border-radius: 10px;
       font-family: "Trebuchet MS", Verdana, sans-serif; font-weight: bold; outline: none;

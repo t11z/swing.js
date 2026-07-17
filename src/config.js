@@ -1,7 +1,11 @@
 // All layout constants, colors and timings in one place.
+//
+// Two layouts share one mutable LAYOUT object: the classic 4:3 landscape and
+// a phone-friendly 9:16 portrait. initLayout() must run before the Phaser
+// game is created; everything reads LAYOUT lazily, so both work unchanged.
 import { tiltOffset } from './core/match.js';
 
-export const LAYOUT = {
+const LANDSCAPE = {
   W: 1280,
   H: 960,
   COL_W: 80,
@@ -12,7 +16,29 @@ export const LAYOUT = {
   READOUT_Y: 934,
   CLAW_Y: 216,
   QUEUE_Y: 92,
+  portrait: false,
 };
+
+const PORTRAIT = {
+  W: 720,
+  H: 1280,
+  COL_W: 80,
+  BALL_D: 64,
+  PLAYFIELD_X: 40,
+  BOTTOM_ROW_Y: 1128,
+  FLOOR_Y: 1178,
+  READOUT_Y: 1206,
+  CLAW_Y: 320,
+  QUEUE_Y: 150,
+  portrait: true,
+};
+
+export const LAYOUT = { ...LANDSCAPE };
+
+export function initLayout(portrait) {
+  Object.assign(LAYOUT, portrait ? PORTRAIT : LANDSCAPE);
+  LIGHT.x = LAYOUT.W / 2;
+}
 
 export const colX = (c) => LAYOUT.PLAYFIELD_X + c * LAYOUT.COL_W + LAYOUT.COL_W / 2;
 export const rowY = (r) => LAYOUT.BOTTOM_ROW_Y - r * LAYOUT.BALL_D;
@@ -22,6 +48,7 @@ export const ballY = (col, stackIndex, tilts) => rowY(tiltOffset(col, tilts) + s
 export const COLOR_TINTS = [0x2fd4c7, 0xe8404a, 0x49b654, 0x3b6ff0, 0xf3c53d, 0xa85fe0, 0xf07f2e];
 
 // Imaginary light source above the field; ball speculars point toward it.
+// initLayout() keeps its x centered for the active layout.
 export const LIGHT = { x: LAYOUT.W / 2, y: -260 };
 export const HEART_TINT = 0xf06292;
 export const BOMB_TINT = 0x4a4a52;

@@ -49,6 +49,15 @@ export class PreloadScene extends Phaser.Scene {
     const params = this.game.registry.get('params') ?? {};
     if (params.lang) setLang(params.lang);
     if (params.mute) this.sound.mute = true;
+    // A game stashed before an orientation-change reload resumes directly.
+    let hasResume = false;
+    try {
+      hasResume = Boolean(sessionStorage.getItem('swing.resume'));
+    } catch { /* ignore */ }
+    if (hasResume) {
+      this.scene.start('Game', {});
+      return;
+    }
     if (params.autostart) {
       this.scene.start('Game', {
         seed: params.seed,

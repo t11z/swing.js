@@ -62,6 +62,15 @@ export class SeesawView {
     this.gearBoost *= 0.92 ** (delta / 16.6);
   }
 
+  // Snap to a tilt without animation (restoring a saved field).
+  setTiltInstant(tilt) {
+    this.tilt = tilt;
+    this.gear.angle = tilt * 45;
+    this.shells.forEach((shell) => {
+      this.positionShell(shell, tiltOffset(shell.col, this.tiltsArray()));
+    });
+  }
+
   // Tween to a new tilt; returns a promise resolving when done.
   setTilt(tilt) {
     this.gearBoost = (tilt - this.tilt) * 260;

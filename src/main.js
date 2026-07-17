@@ -1,6 +1,7 @@
-// Entry point: reads URL params, boots Phaser with all scenes.
-import { LAYOUT } from './config.js';
-import { t, setLang } from './i18n.js';
+// Entry point: reads URL params, picks the layout for the current
+// orientation, boots Phaser with all scenes.
+import { LAYOUT, initLayout } from './config.js';
+import { setLang } from './i18n.js';
 import { PreloadScene } from './scenes/PreloadScene.js';
 import { MainMenuScene } from './scenes/MainMenuScene.js';
 import { GameScene } from './scenes/GameScene.js';
@@ -19,6 +20,9 @@ const params = {
 
 if (params.lang) setLang(params.lang);
 
+const bootPortrait = window.innerHeight > window.innerWidth;
+initLayout(bootPortrait);
+
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game',
@@ -34,15 +38,22 @@ const game = new Phaser.Game({
 });
 game.registry.set('params', params);
 
-// Gentle landscape nudge on touch devices (CSS-positioned, non-blocking).
-const rotateHint = document.getElementById('rotate-hint');
-if (rotateHint && 'ontouchstart' in window) {
-  rotateHint.textContent = t('rotateHint');
-  const portrait = window.matchMedia('(orientation: portrait)');
-  const update = () => { rotateHint.style.display = portrait.matches ? 'block' : 'none'; };
-  portrait.addEventListener?.('change', update);
-  update();
-}
+// Orientation change: stash a running game's state (the GameScene provides
+// the hook), then reload so the matching layout boots. The stash is restored
+// seamlessly on the other side.
+let reloading = false;
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    const nowPortrait = window.innerHeight > window.innerWidth;
+    if (nowPortrait !== bootPortrait && !reloading) {
+      reloading = true;
+      window.__SWING__?.stash?.();
+      window.location.reload();
+    }
+  }, 250);
+});
 
 // The GameScene replaces this with the live hooks once it is running.
 window.__SWING__ = { game, isReady: () => false };

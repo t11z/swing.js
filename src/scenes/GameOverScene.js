@@ -24,25 +24,26 @@ export class GameOverScene extends Phaser.Scene {
 
   create() {
     const W = LAYOUT.W;
+    const dy = (LAYOUT.H - 960) / 2; // center the 960-high design vertically
     this.add.rectangle(W / 2, LAYOUT.H / 2, W, LAYOUT.H, 0x171310);
     if (fxOk(this)) this.cameras.main.postFX.addVignette(0.5, 0.5, 0.88, 0.34);
-    this.add.image(W / 2, 460, 'i-panel_dark').setDisplaySize(640, 500).setTint(0x54422f);
+    this.add.image(W / 2, 460 + dy, 'i-panel_dark').setDisplaySize(Math.min(W - 24, 640), 500).setTint(0x54422f);
 
-    this.add.text(W / 2, 290, t('gameOver'), {
+    this.add.text(W / 2, 290 + dy, t('gameOver'), {
       fontFamily: FONTS.UI, fontStyle: 'bold', fontSize: '84px',
       color: '#e8404a', stroke: '#241c10', strokeThickness: 10,
     }).setOrigin(0.5);
 
-    this.add.text(W / 2, 390, `${t('yourScore')}: ${this.result.score.toLocaleString()}   ·   ${t('level')} ${this.result.level}`, {
+    this.add.text(W / 2, 390 + dy, `${t('yourScore')}: ${this.result.score.toLocaleString()}   ·   ${t('level')} ${this.result.level}`, {
       fontFamily: FONTS.UI, fontStyle: 'bold', fontSize: '30px', color: '#f0ead8',
     }).setOrigin(0.5);
 
-    this.add.text(W / 2, 455, t('enterName'), {
+    this.add.text(W / 2, 455 + dy, t('enterName'), {
       fontFamily: FONTS.UI, fontSize: '20px', color: '#c9bfa4',
     }).setOrigin(0.5);
 
     // Native input: brings up the on-screen keyboard on phones.
-    this.nameInput = this.add.dom(W / 2, 520, 'input', INPUT_STYLE);
+    this.nameInput = this.add.dom(W / 2, 520 + dy, 'input', INPUT_STYLE);
     const node = this.nameInput.node;
     node.value = this.result.playerName || loadName() || '';
     node.maxLength = 14;
@@ -60,9 +61,9 @@ export class GameOverScene extends Phaser.Scene {
     if (!this.sys.game.device.input.touch) node.focus();
 
     // Big friendly OK button (min. touch target size even at phone scale)
-    const ok = this.add.image(W / 2, 620, 'ui-button-active')
+    const ok = this.add.image(W / 2, 620 + dy, 'ui-button-active')
       .setDisplaySize(240, 72).setInteractive({ useHandCursor: true });
-    this.add.text(W / 2, 616, t('ok'), {
+    this.add.text(W / 2, 616 + dy, t('ok'), {
       fontFamily: FONTS.UI, fontStyle: 'bold', fontSize: '30px', color: '#3a2c10',
     }).setOrigin(0.5);
     ok.on('pointerover', () => ok.setTint(0xffe082));
