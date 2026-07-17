@@ -9,6 +9,7 @@ import { SeesawView } from '../view/SeesawView.js';
 import { ClawView } from '../view/ClawView.js';
 import { QueueView } from '../view/QueueView.js';
 import { EventPlayer } from '../view/EventPlayer.js';
+import { ambientDust, fxOk } from '../view/effects.js';
 
 const { W, H } = { W: LAYOUT.W, H: LAYOUT.H };
 
@@ -35,9 +36,16 @@ export class GameScene extends Phaser.Scene {
 
     this.playfield = this.add.container(0, 0);
     this.buildLayout();
-    // Soft highlight of the aimed column (updated by moveClaw/doDrop)
-    this.aimMarker = this.add.rectangle(colX(3), 570, LAYOUT.COL_W - 14, 640, 0xffffff, 0.05).setDepth(1);
+    // Spotlight beam from the claw onto the aimed column (moveClaw/doDrop)
+    this.aimMarker = this.add.image(colX(3), LAYOUT.CLAW_Y - 24, 'light-beam')
+      .setOrigin(0.5, 0)
+      .setDisplaySize(LAYOUT.COL_W - 6, LAYOUT.FLOOR_Y - LAYOUT.CLAW_Y + 14)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setAlpha(0.5)
+      .setDepth(1);
     this.seesaws = [0, 1, 2, 3].map((s) => new SeesawView(this, s, this.playfield));
+    ambientDust(this, LAYOUT.PLAYFIELD_X, 300, LAYOUT.COL_W * NUM_COLS, 540);
+    if (fxOk(this)) this.cameras.main.postFX.addVignette(0.5, 0.5, 0.86, 0.38);
     this.queueView = new QueueView(this);
     this.claw = new ClawView(this);
     this.eventPlayer = new EventPlayer(this);
@@ -72,11 +80,32 @@ export class GameScene extends Phaser.Scene {
       pf.add(this.add.rectangle(cx, 585, LAYOUT.COL_W * 2 - 10, 680, 0x0e0b09));
     }
 
-    // Side panels with a light bar, echoing the original cabinet look
+    // Side panels with a flickering light bar, echoing the cabinet look
     for (const px of [150, W - 150]) {
       pf.add(this.add.image(px, 590, 'i-panel_dark').setDisplaySize(272, 640).setTint(0x54422f));
       pf.add(this.add.rectangle(px, 292, 240, 22, 0x3a2d20));
-      pf.add(this.add.rectangle(px, 292, 220, 10, 0xe8dc82));
+      const bar = this.add.rectangle(px, 292, 220, 10, 0xe8dc82);
+      pf.add(bar);
+      const glow = this.add.image(px, 302, 'light-beam')
+        .setOrigin(0.5, 0).setDisplaySize(230, 190)
+        .setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.4);
+      pf.add(glow);
+      this.tweens.add({
+        targets: bar,
+        alpha: { from: 1, to: 0.66 },
+        duration: 1800 + px, // slightly out of phase left vs right
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+      this.tweens.add({
+        targets: glow,
+        alpha: { from: 0.4, to: 0.2 },
+        duration: 1800 + px,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
       const label = this.add.text(px, 560, 'SWING', {
         fontFamily: FONTS.UI, fontStyle: 'bold', fontSize: '42px',
         color: '#6e5a35',
@@ -128,6 +157,7 @@ export class GameScene extends Phaser.Scene {
     for (let i = 0; i < 4; i++) {
       const x = 44 + i * 58;
       const lamp = this.add.image(x, 148, 'i-lamp_orange').setDisplaySize(34, 34).setDepth(40);
+      if (fxOk(this)) lamp.preFX.setPadding(12);
       mkLabel(x, 166, `x${i + 1}`, 15, '#c9bfa4', 0.5).setOrigin(0.5, 0);
       this.lamps.push(lamp);
     }
@@ -260,8 +290,30 @@ export class GameScene extends Phaser.Scene {
 
   // --- HUD refresh -----------------------------------------------------------
 
+  // Roll the displayed score toward the real one with a little pop.
+  setScore(target, instant = false) {
+    this.displayedScore ??= 0;
+    if (instant || target === this.displayedScore) {
+      this.displayedScore = target;
+      this.scoreText.setText(target.toLocaleString());
+      return;
+    }
+    this.scoreRoll?.remove();
+    const proxy = { v: this.displayedScore };
+    this.scoreRoll = this.tweens.add({
+      targets: proxy,
+      v: target,
+      duration: 480,
+      ease: 'Quad.easeOut',
+      onUpdate: () => this.scoreText.setText(Math.round(proxy.v).toLocaleString()),
+      onComplete: () => { this.displayedScore = target; },
+    });
+    this.scoreText.setScale(1.18);
+    this.tweens.add({ targets: this.scoreText, scale: 1, duration: 260, ease: 'Back.easeOut' });
+  }
+
   onCoreEvent(ev) {
-    if (ev.scoreAfter !== undefined) this.scoreText.setText(ev.scoreAfter.toLocaleString());
+    if (ev.scoreAfter !== undefined) this.setScore(ev.scoreAfter);
     if (ev.type === 'bonusLamp' || ev.type === 'match') this.refreshLamps();
     if (ev.type === 'levelUp') this.levelText.setText(String(ev.level));
     if (['land', 'fling', 'settle', 'match', 'merge', 'explode', 'tilt'].includes(ev.type)) {
@@ -271,7 +323,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   refreshHud() {
-    this.scoreText.setText(this.core.score.toLocaleString());
+    this.setScore(this.core.score, true);
     this.levelText.setText(String(this.core.level));
     this.counterText.setText(String(this.core.ballsDropped));
     this.refreshLamps();
@@ -280,17 +332,41 @@ export class GameScene extends Phaser.Scene {
 
   refreshLamps() {
     this.lamps.forEach((lamp, i) => {
-      lamp.setAlpha(this.core.multiplier >= i + 1 ? 1 : 0.22);
+      const lit = this.core.multiplier >= i + 1;
+      lamp.setAlpha(lit ? 1 : 0.22);
+      if (!fxOk(this)) return;
+      if (lit && !lamp.glowFX) {
+        lamp.glowFX = lamp.preFX.addGlow(0xffaa33, 3);
+      } else if (!lit && lamp.glowFX) {
+        lamp.preFX.remove(lamp.glowFX);
+        lamp.glowFX = null;
+      }
     });
   }
 
   refreshReadouts() {
+    this.readoutTweens ??= new Array(NUM_COLS).fill(null);
     for (let c = 0; c < NUM_COLS; c++) {
       const w = this.core.weightOf(c);
       const len = this.core.columns[c].length;
       const cap = capacity(c, this.core.tilts);
+      const danger = len >= cap - 1 && len > 0;
       this.readouts[c].setText(String(w));
-      this.readouts[c].setColor(len >= cap - 1 ? '#ff7f7f' : '#e8e2d4');
+      this.readouts[c].setColor(danger ? '#ff7f7f' : '#e8e2d4');
+      if (danger && !this.readoutTweens[c]) {
+        this.readoutTweens[c] = this.tweens.add({
+          targets: this.readouts[c],
+          alpha: 0.35,
+          duration: 380,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut',
+        });
+      } else if (!danger && this.readoutTweens[c]) {
+        this.readoutTweens[c].remove();
+        this.readoutTweens[c] = null;
+        this.readouts[c].setAlpha(1);
+      }
     }
   }
 
@@ -339,6 +415,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   update(time, delta) {
+    this.seesaws.forEach((s) => s.update(delta));
+    this.claw.update(time);
     if (!this.paused) this.playMs += delta;
     const total = Math.floor(this.playMs / 1000);
     const mm = String(Math.floor(total / 60)).padStart(2, '0');

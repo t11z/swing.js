@@ -2,6 +2,7 @@
 import { LAYOUT, FONTS } from '../config.js';
 import { t } from '../i18n.js';
 import { loadScores } from '../highscore.js';
+import { fxOk } from '../view/effects.js';
 
 export class HighscoreScene extends Phaser.Scene {
   constructor() {
@@ -15,6 +16,7 @@ export class HighscoreScene extends Phaser.Scene {
   create() {
     const W = LAYOUT.W;
     this.add.rectangle(W / 2, LAYOUT.H / 2, W, LAYOUT.H, 0x171310);
+    if (fxOk(this)) this.cameras.main.postFX.addVignette(0.5, 0.5, 0.88, 0.34);
     this.add.image(W / 2, 490, 'i-panel_dark').setDisplaySize(760, 700).setTint(0x54422f);
 
     this.add.text(W / 2, 170, t('highscores'), {

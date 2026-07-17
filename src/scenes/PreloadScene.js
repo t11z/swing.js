@@ -47,6 +47,7 @@ export class PreloadScene extends Phaser.Scene {
 
   create() {
     this.makeJokerTexture();
+    this.makeGeneratedTextures();
     const params = this.game.registry.get('params') ?? {};
     if (params.lang) setLang(params.lang);
     if (params.mute) this.sound.mute = true;
@@ -59,6 +60,41 @@ export class PreloadScene extends Phaser.Scene {
     } else {
       this.scene.start('Menu');
     }
+  }
+
+  // Soft radial shadow and a vertical light beam, both drawn at runtime so we
+  // need no extra image assets.
+  makeGeneratedTextures() {
+    // Circular soft blob; sprites squash it into an ellipse via displaySize.
+    const shadow = this.textures.createCanvas('soft-shadow', 128, 128);
+    const sctx = shadow.getContext();
+    const grad = sctx.createRadialGradient(64, 64, 6, 64, 64, 62);
+    grad.addColorStop(0, 'rgba(0,0,0,0.55)');
+    grad.addColorStop(0.6, 'rgba(0,0,0,0.28)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    sctx.fillStyle = grad;
+    sctx.fillRect(0, 0, 128, 128);
+    shadow.refresh();
+
+    const beam = this.textures.createCanvas('light-beam', 64, 512);
+    const bctx = beam.getContext();
+    const bgrad = bctx.createLinearGradient(0, 0, 0, 512);
+    bgrad.addColorStop(0, 'rgba(255,240,200,0.55)');
+    bgrad.addColorStop(0.5, 'rgba(255,240,200,0.22)');
+    bgrad.addColorStop(1, 'rgba(255,240,200,0)');
+    bctx.fillStyle = bgrad;
+    bctx.fillRect(0, 0, 64, 512);
+    // soften the beam's vertical edges
+    const edge = bctx.createLinearGradient(0, 0, 64, 0);
+    edge.addColorStop(0, 'rgba(0,0,0,1)');
+    edge.addColorStop(0.25, 'rgba(0,0,0,0)');
+    edge.addColorStop(0.75, 'rgba(0,0,0,0)');
+    edge.addColorStop(1, 'rgba(0,0,0,1)');
+    bctx.globalCompositeOperation = 'destination-out';
+    bctx.fillStyle = edge;
+    bctx.fillRect(0, 0, 64, 512);
+    bctx.globalCompositeOperation = 'source-over';
+    beam.refresh();
   }
 
   // The joker is a rainbow ball: multiply a diagonal rainbow over the grey

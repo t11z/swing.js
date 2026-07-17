@@ -18,6 +18,14 @@ export class ClawView {
     this.heldSprite = null;
   }
 
+  // Gentle idle bob, driven from GameScene.update. The held ball follows;
+  // once released it belongs to the EventPlayer and is left alone.
+  update(time) {
+    const bob = Math.sin(time / 520) * 3;
+    this.container.y = LAYOUT.CLAW_Y + bob;
+    if (this.heldSprite) this.heldSprite.y = LAYOUT.CLAW_Y + 26 + bob;
+  }
+
   // The held ball is a world-level BallSprite (not a child) so releasing it
   // needs no reparenting gymnastics.
   hold(ball) {

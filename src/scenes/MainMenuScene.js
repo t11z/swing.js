@@ -3,6 +3,7 @@
 import { LAYOUT, FONTS, COLOR_TINTS, STORAGE } from '../config.js';
 import { t, getLang, setLang } from '../i18n.js';
 import { loadName, saveName } from '../highscore.js';
+import { fxOk } from '../view/effects.js';
 
 const DIFF_ORDER = ['easy', 'normal', 'hard'];
 
@@ -33,20 +34,48 @@ export class MainMenuScene extends Phaser.Scene {
     this.playerName = loadName() || 'Player 1';
 
     this.add.rectangle(W / 2, LAYOUT.H / 2, W, LAYOUT.H, 0x171310);
+
+    // Slow rain of dim marbles behind the panel
+    for (let i = 0; i < 6; i++) {
+      const ball = this.add.image(0, 0, 'ball')
+        .setDisplaySize(30 + (i % 3) * 14, 30 + (i % 3) * 14)
+        .setTint(COLOR_TINTS[i % COLOR_TINTS.length])
+        .setAlpha(0.16);
+      this.spawnFallingBall(ball, true);
+    }
+
     this.add.image(W / 2, 480, 'i-panel_dark').setDisplaySize(720, 780).setTint(0x54422f);
     this.add.image(W / 2, 130, 'i-hazard_long').setDisplaySize(660, 14);
 
-    this.add.text(W / 2, 190, t('title'), {
+    const title = this.add.text(W / 2, 190, t('title'), {
       fontFamily: FONTS.UI, fontStyle: 'bold', fontSize: '110px',
       color: '#d8cf7a', stroke: '#241c10', strokeThickness: 10,
     }).setOrigin(0.5);
+    if (fxOk(this)) {
+      title.preFX.setPadding(24);
+      const glow = title.preFX.addGlow(0xd8cf7a, 1);
+      this.tweens.add({
+        targets: glow, outerStrength: 4, duration: 1700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut',
+      });
+      this.cameras.main.postFX.addVignette(0.5, 0.5, 0.88, 0.34);
+    }
     this.add.text(W / 2, 268, t('subtitle'), {
       fontFamily: FONTS.UI, fontSize: '22px', color: '#c9bfa4',
     }).setOrigin(0.5);
 
-    // Decorative marbles under the title
+    // Decorative marbles under the title, gently bobbing out of phase
     COLOR_TINTS.forEach((tint, i) => {
-      this.add.image(W / 2 + (i - 3) * 64, 330, 'ball').setDisplaySize(44, 44).setTint(tint);
+      const marble = this.add.image(W / 2 + (i - 3) * 64, 330, 'ball')
+        .setDisplaySize(44, 44).setTint(tint);
+      this.tweens.add({
+        targets: marble,
+        y: 324,
+        duration: 1200,
+        delay: i * 140,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
     });
 
     this.buttons = [];
@@ -78,14 +107,37 @@ export class MainMenuScene extends Phaser.Scene {
       fontFamily: FONTS.UI, fontStyle: 'bold', fontSize: '24px',
       color: primary ? '#3a2c10' : '#2c2418',
     }).setOrigin(0.5);
-    img.on('pointerover', () => img.setTint(primary ? 0xffe082 : 0xd8cf7a));
-    img.on('pointerout', () => img.setTint(primary ? 0xffffff : 0xbfae98));
+    const pop = (factor) => {
+      this.tweens.add({
+        targets: [img, text],
+        scaleX: `*=${factor}`,
+        scaleY: `*=${factor}`,
+        duration: 110,
+        ease: 'Quad.easeOut',
+      });
+    };
+    img.on('pointerover', () => { img.setTint(primary ? 0xffe082 : 0xd8cf7a); pop(1.035); });
+    img.on('pointerout', () => { img.setTint(primary ? 0xffffff : 0xbfae98); pop(1 / 1.035); });
     img.on('pointerdown', () => {
       this.sound.play('click', { volume: 0.5 });
       onClick();
     });
     this.buttons.push({ img, text });
     return { img, text };
+  }
+
+  spawnFallingBall(ball, randomizeY = false) {
+    if (!ball.scene) return;
+    ball.x = 80 + Math.random() * (LAYOUT.W - 160);
+    ball.y = randomizeY ? Math.random() * LAYOUT.H : -60;
+    this.tweens.add({
+      targets: ball,
+      y: LAYOUT.H + 60,
+      angle: ball.angle + (Math.random() > 0.5 ? 180 : -180),
+      duration: 14000 + Math.random() * 10000,
+      ease: 'Linear',
+      onComplete: () => this.spawnFallingBall(ball),
+    });
   }
 
   renderTexts() {

@@ -5,7 +5,10 @@
 import { LAYOUT, TIMINGS, colX, rowY } from '../config.js';
 import { tiltOffset, NUM_COLS } from '../core/match.js';
 import { BallSprite } from './BallSprite.js';
-import { fireBurst, explosion, starFlash, floatText } from './effects.js';
+import {
+  fireBurst, explosion, starFlash, floatText,
+  landPuff, flingTrail, shockwave, starRain, fxOk,
+} from './effects.js';
 
 export class EventPlayer {
   constructor(scene) {
@@ -57,14 +60,23 @@ export class EventPlayer {
     this.viewCols[ev.col].push(ev.ball.id);
     const targetY = this.yFor(ev.col, ev.stackIndex);
     const rows = Math.max(1, Math.abs(targetY - sprite.y) / LAYOUT.BALL_D);
+    const duration = Math.max(TIMINGS.FALL_MIN, rows * TIMINGS.FALL_PER_ROW);
     sprite.setDepth(20);
+    // Ground shadow that sharpens as the ball comes down
+    const shadow = this.scene.add.image(colX(ev.col), targetY + LAYOUT.BALL_D / 2 - 2, 'soft-shadow')
+      .setDisplaySize(20, 8).setAlpha(0.15).setDepth(8);
+    this.scene.tweens.add({
+      targets: shadow, displayWidth: LAYOUT.BALL_D * 0.95, displayHeight: 16, alpha: 0.5, duration,
+    });
     await this.tween({
       targets: sprite,
       x: colX(ev.col),
       y: targetY,
-      duration: Math.max(TIMINGS.FALL_MIN, rows * TIMINGS.FALL_PER_ROW),
+      duration,
       ease: 'Quad.easeIn',
     });
+    shadow.destroy();
+    landPuff(this.scene, colX(ev.col), targetY + LAYOUT.BALL_D / 2 - 4, Math.min(3, rows * 0.4));
     sprite.setDepth(10);
     this.scene.sfx(`land_${ev.ball.id % 3}`, 0.5);
     // little squash on impact
@@ -134,6 +146,7 @@ export class EventPlayer {
     const height = 90 + distance * 30;
     const proxy = { t: 0 };
     sprite.setDepth(30);
+    const stopTrail = flingTrail(this.scene, sprite);
     return this.tween({
       targets: proxy,
       t: 1,
@@ -146,7 +159,10 @@ export class EventPlayer {
         sprite.angle += 7;
         if (fade && t > 0.7) sprite.setAlpha(1 - (t - 0.7) / 0.3);
       },
-    }).then(() => sprite.setAngle(0));
+    }).then(() => {
+      stopTrail();
+      sprite.setAngle(0);
+    });
   }
 
   async on_match(ev) {
@@ -170,7 +186,10 @@ export class EventPlayer {
       if (idx >= 0) arr.splice(idx, 1);
     }
     if (ev.cells.length) {
-      floatText(this.scene, cx / ev.cells.length, cy / ev.cells.length - 30,
+      const mx = cx / ev.cells.length;
+      const my = cy / ev.cells.length;
+      shockwave(this.scene, mx, my);
+      floatText(this.scene, mx, my - 30,
         `+${ev.points}`, ev.multiplier > 1 ? '#ffd54f' : '#ffe082', 26 + ev.multiplier * 3);
     }
     await this.wait(TIMINGS.MATCH_BURN);
@@ -218,6 +237,10 @@ export class EventPlayer {
       targets: merged, scale: 1.15, duration: 140, ease: 'Back.easeOut',
     });
     merged.setScale(1);
+    if (fxOk(this.scene)) {
+      const shine = merged.base.preFX.addShine(0.8, 0.4, 4);
+      this.scene.time.delayedCall(900, () => merged.base?.preFX?.remove(shine));
+    }
   }
 
   async on_explode(ev) {
@@ -254,6 +277,7 @@ export class EventPlayer {
 
   async on_starPhase() {
     this.scene.sfx('levelup', 0.6);
+    starRain(this.scene, LAYOUT.PLAYFIELD_X, LAYOUT.COL_W * NUM_COLS);
     await this.scene.showBanner('starPhase');
   }
 

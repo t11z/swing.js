@@ -3,6 +3,7 @@
 import { LAYOUT, FONTS } from '../config.js';
 import { t } from '../i18n.js';
 import { addScore, loadName, saveName } from '../highscore.js';
+import { fxOk } from '../view/effects.js';
 
 const INPUT_STYLE = `
   width: 380px; font-size: 30px; padding: 10px 16px; text-align: center;
@@ -24,6 +25,7 @@ export class GameOverScene extends Phaser.Scene {
   create() {
     const W = LAYOUT.W;
     this.add.rectangle(W / 2, LAYOUT.H / 2, W, LAYOUT.H, 0x171310);
+    if (fxOk(this)) this.cameras.main.postFX.addVignette(0.5, 0.5, 0.88, 0.34);
     this.add.image(W / 2, 460, 'i-panel_dark').setDisplaySize(640, 500).setTint(0x54422f);
 
     this.add.text(W / 2, 290, t('gameOver'), {
