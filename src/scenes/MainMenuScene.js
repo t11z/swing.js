@@ -37,9 +37,8 @@ export class MainMenuScene extends Phaser.Scene {
 
     // Slow rain of dim marbles behind the panel
     for (let i = 0; i < 6; i++) {
-      const ball = this.add.image(0, 0, 'ball')
+      const ball = this.add.image(0, 0, `ball3d-c${i % COLOR_TINTS.length}`)
         .setDisplaySize(30 + (i % 3) * 14, 30 + (i % 3) * 14)
-        .setTint(COLOR_TINTS[i % COLOR_TINTS.length])
         .setAlpha(0.16);
       this.spawnFallingBall(ball, true);
     }
@@ -65,8 +64,8 @@ export class MainMenuScene extends Phaser.Scene {
 
     // Decorative marbles under the title, gently bobbing out of phase
     COLOR_TINTS.forEach((tint, i) => {
-      const marble = this.add.image(W / 2 + (i - 3) * 64, 330, 'ball')
-        .setDisplaySize(44, 44).setTint(tint);
+      const marble = this.add.image(W / 2 + (i - 3) * 64, 330, `ball3d-c${i}`)
+        .setDisplaySize(44, 44);
       this.tweens.add({
         targets: marble,
         y: 324,

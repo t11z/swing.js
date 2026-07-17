@@ -147,7 +147,7 @@ export class GameScene extends Phaser.Scene {
     mkLabel(W / 2 + 190, 12, t(`difficulty.${this.settings.difficulty}`), 18, '#f0ead8');
 
     // Left cluster: level ball, ball counter, bonus lamps
-    this.add.image(64, 64, 'ball').setDisplaySize(56, 56).setTint(0x2fd4c7).setDepth(40);
+    this.add.image(64, 64, 'ball3d-c0').setDisplaySize(56, 56).setDepth(40);
     this.levelText = mkLabel(64, 50, '1', 26, '#ffffff', 0.5).setOrigin(0.5, 0);
     mkLabel(64, 96, t('level'), 18, '#d8cf7a', 0.5).setOrigin(0.5, 0);
     this.add.image(150, 52, 'i-claw_prongs').setDisplaySize(30, 30).setTint(0x9a8d7c).setDepth(40);
@@ -417,6 +417,8 @@ export class GameScene extends Phaser.Scene {
   update(time, delta) {
     this.seesaws.forEach((s) => s.update(delta));
     this.claw.update(time);
+    // Keep every moving ball's specular pointed at the light source.
+    for (const sprite of this.sprites.values()) sprite.updateLight?.();
     if (!this.paused) this.playMs += delta;
     const total = Math.floor(this.playMs / 1000);
     const mm = String(Math.floor(total / 60)).padStart(2, '0');

@@ -1,7 +1,7 @@
-// Loads every asset with a progress bar, generates the joker's rainbow
-// texture, then hands over to the menu (or straight into the game for
-// ?autostart=1 test runs).
-import { LAYOUT, FONTS } from '../config.js';
+// Loads every asset with a progress bar, generates the shaded ball textures
+// and helper gradients, then hands over to the menu (or straight into the
+// game for ?autostart=1 test runs).
+import { LAYOUT, FONTS, COLOR_TINTS, HEART_TINT, BOMB_TINT, STAR_TINT } from '../config.js';
 import { setLang } from '../i18n.js';
 
 const INDUSTRIAL = [
@@ -34,8 +34,6 @@ export class PreloadScene extends Phaser.Scene {
     const fill = this.add.rectangle(cx - 206, cy + 20, 0, 18, 0xd8cf7a).setOrigin(0, 0.5);
     this.load.on('progress', (v) => { fill.width = 412 * v; });
 
-    this.load.image('ball', 'assets/balls/ball.png');
-    this.load.image('ball-plain', 'assets/balls/ball_plain.png');
     for (const name of INDUSTRIAL) this.load.image(`i-${name}`, `assets/industrial/${name}.png`);
     for (const name of PARTICLES) this.load.image(`p-${name}`, `assets/particles/${name}.png`);
     this.load.image('ui-button', 'assets/ui/button.png');
@@ -46,7 +44,7 @@ export class PreloadScene extends Phaser.Scene {
   }
 
   create() {
-    this.makeJokerTexture();
+    this.makeBallTextures();
     this.makeGeneratedTextures();
     const params = this.game.registry.get('params') ?? {};
     if (params.lang) setLang(params.lang);
@@ -97,23 +95,113 @@ export class PreloadScene extends Phaser.Scene {
     beam.refresh();
   }
 
-  // The joker is a rainbow ball: multiply a diagonal rainbow over the grey
-  // marble, then clip back to the marble's alpha.
-  makeJokerTexture() {
-    const src = this.textures.get('ball').getSourceImage();
-    const { width, height } = src;
-    const canvas = this.textures.createCanvas('ball-joker', width, height);
-    const ctx = canvas.getContext();
-    ctx.drawImage(src, 0, 0);
-    const grad = ctx.createLinearGradient(0, 0, width, height);
-    const stops = ['#ff5050', '#ffae30', '#ffe939', '#4fdc51', '#33c5ff', '#8a5cff', '#ff4bd8'];
-    stops.forEach((c, i) => grad.addColorStop(i / (stops.length - 1), c));
-    ctx.globalCompositeOperation = 'multiply';
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, width, height);
-    ctx.globalCompositeOperation = 'destination-in';
-    ctx.drawImage(src, 0, 0);
-    ctx.globalCompositeOperation = 'source-over';
-    canvas.refresh();
+  // Shaded sphere textures for every ball type, plus the specular dot and
+  // the rotating surface-band layer. All drawn at runtime — no image assets.
+  makeBallTextures() {
+    COLOR_TINTS.forEach((color, i) => makeShadedBall(this, `ball3d-c${i}`, color));
+    makeShadedBall(this, 'ball3d-heart', HEART_TINT);
+    makeShadedBall(this, 'ball3d-bomb', BOMB_TINT);
+    makeShadedBall(this, 'ball3d-star', STAR_TINT);
+    makeShadedBall(this, 'ball3d-joker', 0xcccccc, { rainbow: true });
+    makeSpecTexture(this);
+    makeBandTexture(this);
   }
+}
+
+const BALL_TEX_SIZE = 256;
+const BALL_TEX_R = 122;
+
+const cssColor = (color) => `#${color.toString(16).padStart(6, '0')}`;
+
+// A convincing 2D sphere: flat base color, a radial shading pass with the
+// light baked straight above (the dynamic specular wanders around it), a
+// dark occluded rim and a faint bounce light along the bottom edge.
+function makeShadedBall(scene, key, color, { rainbow = false } = {}) {
+  const S = BALL_TEX_SIZE;
+  const C = S / 2;
+  const R = BALL_TEX_R;
+  const canvas = scene.textures.createCanvas(key, S, S);
+  const ctx = canvas.getContext();
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(C, C, R, 0, Math.PI * 2);
+  ctx.clip();
+
+  if (rainbow && ctx.createConicGradient) {
+    const conic = ctx.createConicGradient(-Math.PI / 2, C, C);
+    const stops = ['#ff4b4b', '#ffae30', '#ffe93a', '#4fdc51', '#33c5ff', '#8a5cff', '#ff4bd8', '#ff4b4b'];
+    stops.forEach((s, i) => conic.addColorStop(i / (stops.length - 1), s));
+    ctx.fillStyle = conic;
+  } else if (rainbow) {
+    const lin = ctx.createLinearGradient(0, 0, S, S);
+    const stops = ['#ff4b4b', '#ffae30', '#ffe93a', '#4fdc51', '#33c5ff', '#8a5cff', '#ff4bd8'];
+    stops.forEach((s, i) => lin.addColorStop(i / (stops.length - 1), s));
+    ctx.fillStyle = lin;
+  } else {
+    ctx.fillStyle = cssColor(color);
+  }
+  ctx.fillRect(0, 0, S, S);
+
+  const shade = ctx.createRadialGradient(C, C - R * 0.52, R * 0.12, C, C + R * 0.12, R * 1.12);
+  shade.addColorStop(0, 'rgba(255,255,255,0.58)');
+  shade.addColorStop(0.3, 'rgba(255,255,255,0.14)');
+  shade.addColorStop(0.6, 'rgba(0,0,0,0)');
+  shade.addColorStop(0.87, 'rgba(0,0,0,0.30)');
+  shade.addColorStop(1, 'rgba(0,0,0,0.52)');
+  ctx.fillStyle = shade;
+  ctx.fillRect(0, 0, S, S);
+
+  // bounce light: thin bright arc along the lower rim
+  ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+  ctx.lineWidth = 10;
+  ctx.beginPath();
+  ctx.arc(C, C, R - 10, Math.PI * 0.3, Math.PI * 0.7);
+  ctx.stroke();
+
+  ctx.restore();
+  canvas.refresh();
+}
+
+function makeSpecTexture(scene) {
+  const canvas = scene.textures.createCanvas('ball-spec', 64, 64);
+  const ctx = canvas.getContext();
+  const grad = ctx.createRadialGradient(32, 32, 2, 32, 32, 30);
+  grad.addColorStop(0, 'rgba(255,255,255,0.95)');
+  grad.addColorStop(0.3, 'rgba(255,255,255,0.4)');
+  grad.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 64, 64);
+  canvas.refresh();
+}
+
+// Faint latitude bands + speckles; rotating this layer while the shading and
+// specular stay put reads as the ball rolling under a fixed light.
+function makeBandTexture(scene) {
+  const S = BALL_TEX_SIZE;
+  const C = S / 2;
+  const R = BALL_TEX_R;
+  const canvas = scene.textures.createCanvas('ball-band', S, S);
+  const ctx = canvas.getContext();
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(C, C, R - 2, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.strokeStyle = 'rgba(0,0,0,0.16)';
+  ctx.lineWidth = 16;
+  ctx.beginPath();
+  ctx.ellipse(C, C - R * 0.3, R * 0.86, R * 0.34, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(0,0,0,0.10)';
+  ctx.lineWidth = 12;
+  ctx.beginPath();
+  ctx.ellipse(C, C + R * 0.42, R * 0.78, R * 0.26, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.10)';
+  for (const [dx, dy, r] of [[-0.45, 0.1, 9], [0.35, -0.5, 7], [0.5, 0.42, 8]]) {
+    ctx.beginPath();
+    ctx.arc(C + dx * R, C + dy * R, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+  canvas.refresh();
 }

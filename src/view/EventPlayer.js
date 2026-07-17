@@ -68,6 +68,8 @@ export class EventPlayer {
     this.scene.tweens.add({
       targets: shadow, displayWidth: LAYOUT.BALL_D * 0.95, displayHeight: 16, alpha: 0.5, duration,
     });
+    // slight stretch while falling, squash on impact
+    sprite.setScale(0.97, 1.05);
     await this.tween({
       targets: sprite,
       x: colX(ev.col),
@@ -75,11 +77,11 @@ export class EventPlayer {
       duration,
       ease: 'Quad.easeIn',
     });
+    sprite.setScale(1);
     shadow.destroy();
     landPuff(this.scene, colX(ev.col), targetY + LAYOUT.BALL_D / 2 - 4, Math.min(3, rows * 0.4));
     sprite.setDepth(10);
     this.scene.sfx(`land_${ev.ball.id % 3}`, 0.5);
-    // little squash on impact
     await this.tween({
       targets: sprite, scaleY: 0.88, duration: 55, yoyo: true, ease: 'Quad.easeOut',
     });
@@ -156,13 +158,10 @@ export class EventPlayer {
         const { t } = proxy;
         sprite.x = x0 + (x1 - x0) * t;
         sprite.y = y0 + (y1 - y0) * t - height * 4 * t * (1 - t);
-        sprite.angle += 7;
+        sprite.spin(9); // roll the surface, not the whole ball
         if (fade && t > 0.7) sprite.setAlpha(1 - (t - 0.7) / 0.3);
       },
-    }).then(() => {
-      stopTrail();
-      sprite.setAngle(0);
-    });
+    }).then(() => stopTrail());
   }
 
   async on_match(ev) {
